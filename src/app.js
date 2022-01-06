@@ -11,53 +11,6 @@ app.set("models", sequelize.models);
 app.use(routers)
 
 /**
- * Deposits money into the clients balance
- */
-app.post("/balances/deposit/:userId", async (req, res) => {
-  const { Job, Profile, Contract } = req.app.get("models");
-  const {
-    params: { userId },
-    body: { depositAmount },
-  } = req;
-
-  if (!depositAmount) {
-    return res.status(400).end()
-  }
-
-  const jobs = await Job.findAll({
-    where: {
-      paid: {
-        [Op.or]: [false, null],
-      },
-    },
-    include: [
-      {
-        model: Contract,
-        where: {
-          [Op.not]: [{ status: "terminated" }],
-          ClientId: userId,
-        },
-      },
-    ],
-  });
-
-  const totalAmountToPay = jobs.reduce((amount, job) => amount + job.price, 0);
-  const quarterOfTotalAmountToPay = totalAmountToPay / 4;
-
-  if (depositAmount > quarterOfTotalAmountToPay) {
-    return res.status(409).end();
-  }
-
-  // update the balances
-  await Profile.increment("balance", {
-    by: depositAmount,
-    where: { id: userId },
-  });
-
-  res.status(200).end();
-});
-
-/**
  * @returns Returns the profession that earned the most money (sum of jobs paid) for any contactor that worked in the query time range.
  */
 app.get("/admin/best-profession", async (req, res) => {

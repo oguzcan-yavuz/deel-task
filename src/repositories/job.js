@@ -20,6 +20,25 @@ const getUnpaidJobsByProfileId = ({ profileId }) => {
   });
 }
 
+const getUnpaidJobsByClientId = ({ clientId }) => {
+  return Job.findAll({
+    where: {
+      paid: {
+        [Op.or]: [false, null],
+      },
+    },
+    include: [
+      {
+        model: Contract,
+        where: {
+          [Op.not]: [{ status: "terminated" }],
+          ClientId: clientId,
+        },
+      },
+    ],
+  });
+}
+
 const getUnpaidJobByJobIdAndClientId = ({ jobId, clientId }) => {
   return Job.findOne({
     where: {
@@ -70,5 +89,6 @@ const payForJobTransactional = ({ job, profile }) => {
 module.exports = {
   getUnpaidJobsByProfileId,
   getUnpaidJobByJobIdAndClientId,
+  getUnpaidJobsByClientId,
   payForJobTransactional,
 }
