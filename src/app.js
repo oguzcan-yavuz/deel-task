@@ -197,7 +197,7 @@ app.get("/admin/best-profession", async (req, res) => {
     query: { start, end },
   } = req;
 
-  const jobs = await Job.findAll({
+  const [{ dataValues: { profession } }] = await Job.findAll({
     where: {
       paid: true,
       createdAt: {
@@ -215,18 +215,16 @@ app.get("/admin/best-profession", async (req, res) => {
         ]
       },
     ],
+    group: '`Contract->Contractor`.`profession`',
+    attributes: [
+      [sequelize.fn('SUM', sequelize.col('price')), 'paid'],
+      [sequelize.col('`Contract->Contractor`.`profession`'), 'profession'],
+    ],
+    order: [sequelize.literal('paid DESC')],
+    limit: 1
   });
 
-  const professionsWithBalances = jobs.reduce((professions, job) => {
-    professions[job.Contract.Contractor.profession] = professions[job.Contract.Contractor.profession] ?? 0
-    professions[job.Contract.Contractor.profession] += job.price
-
-    return professions
-  }, {})
-
-  const bestProfession = Object.keys(professionsWithBalances).reduce((a, b) => professionsWithBalances[a] > professionsWithBalances[b] ? a : b)
-
-  res.json({ bestProfession })
+  res.json({ bestProfession: profession })
 });
 
 /**
