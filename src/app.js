@@ -229,4 +229,46 @@ app.get("/admin/best-profession", async (req, res) => {
   res.json({ bestProfession })
 });
 
+/**
+ * @returns the clients the paid the most for jobs in the query time period. limit query parameter should be applied, default limit is 2.
+ */
+app.get("/admin/best-client", async (req, res) => {
+  const { Job, Contract, Profile } = req.app.get("models");
+  const {
+    query: { start, end, limit = 2 },
+  } = req;
+
+  const clients = await Job.findAll({
+    where: {
+      paid: true,
+      createdAt: {
+        [Op.between]: [start, end]
+      }
+    },
+    include: [
+      {
+        model: Contract,
+        attributes: [],
+        include: [
+          {
+            model: Profile,
+            as: 'Client',
+            attributes: []
+          }
+        ],
+      },
+    ],
+    group: '`Contract->Client`.`id`',
+    attributes: [
+      [sequelize.fn('SUM', sequelize.col('price')), 'paid'],
+      [sequelize.col('`Contract->Client`.`id`'), 'id'],
+      [sequelize.literal("`Contract->Client`.`firstName` || ' ' || `Contract->Client`.`lastName`"), 'fullName']
+    ],
+    order: [sequelize.literal('paid DESC')],
+    limit
+  });
+
+  res.json(clients)
+});
+
 module.exports = app;
