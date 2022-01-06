@@ -86,10 +86,6 @@ app.post("/jobs/:job_id/pay", getProfile, async (req, res) => {
     profile,
   } = req;
 
-  if (profile.type !== "client") {
-    return res.status(404).end();
-  }
-
   const job = await Job.findOne({
     where: {
       id: jobId,
@@ -112,24 +108,82 @@ app.post("/jobs/:job_id/pay", getProfile, async (req, res) => {
 
   // client has not enough balance
   if (profile.balance < job.price) {
-    return res.status(404).end();
+    return res.status(409).end();
   }
 
   const result = await sequelize.transaction(async (transaction) => {
     // update the balances
-    await Profile.increment('balance', { by: job.price, where: { id: job.Contract.ContractorId }, transaction })
-    await Profile.decrement('balance', { by: job.price, where: { id: profile.id }, transaction })
+    await Profile.increment("balance", {
+      by: job.price,
+      where: { id: job.Contract.ContractorId },
+      transaction,
+    });
+    await Profile.decrement("balance", {
+      by: job.price,
+      where: { id: profile.id },
+      transaction,
+    });
 
     // mark the job as paid
-    await Job.update({ paid: true, paymentDate: new Date() }, {
-      where: {
-        id: jobId,
-      },
-      transaction
-    });
+    await Job.update(
+      { paid: true, paymentDate: new Date() },
+      {
+        where: {
+          id: jobId,
+        },
+        transaction,
+      }
+    );
   });
 
   if (!result) return res.status(404).end();
+
+  res.status(200).end();
+});
+
+/**
+ * Deposits money into the clients balance
+ */
+app.post("/balances/deposit/:userId", async (req, res) => {
+  const { Job, Profile, Contract } = req.app.get("models");
+  const {
+    params: { userId },
+    body: { depositAmount },
+  } = req;
+
+  if (!depositAmount) {
+    return res.status(400).end()
+  }
+
+  const jobs = await Job.findAll({
+    where: {
+      paid: {
+        [Op.or]: [false, null],
+      },
+    },
+    include: [
+      {
+        model: Contract,
+        where: {
+          [Op.not]: [{ status: "terminated" }],
+          ClientId: userId,
+        },
+      },
+    ],
+  });
+
+  const totalAmountToPay = jobs.reduce((amount, job) => amount + job.price, 0);
+  const quarterOfTotalAmountToPay = totalAmountToPay / 4;
+
+  if (depositAmount > quarterOfTotalAmountToPay) {
+    return res.status(409).end();
+  }
+
+  // update the balances
+  await Profile.increment("balance", {
+    by: depositAmount,
+    where: { id: userId },
+  });
 
   res.status(200).end();
 });
