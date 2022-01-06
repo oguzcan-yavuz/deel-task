@@ -188,4 +188,45 @@ app.post("/balances/deposit/:userId", async (req, res) => {
   res.status(200).end();
 });
 
+/**
+ * @returns Returns the profession that earned the most money (sum of jobs paid) for any contactor that worked in the query time range.
+ */
+app.get("/admin/best-profession", async (req, res) => {
+  const { Job, Contract, Profile } = req.app.get("models");
+  const {
+    query: { start, end },
+  } = req;
+
+  const jobs = await Job.findAll({
+    where: {
+      paid: true,
+      createdAt: {
+        [Op.between]: [start, end]
+      }
+    },
+    include: [
+      {
+        model: Contract,
+        include: [
+          {
+            model: Profile,
+            as: 'Contractor'
+          }
+        ]
+      },
+    ],
+  });
+
+  const professionsWithBalances = jobs.reduce((professions, job) => {
+    professions[job.Contract.Contractor.profession] = professions[job.Contract.Contractor.profession] ?? 0
+    professions[job.Contract.Contractor.profession] += job.price
+
+    return professions
+  }, {})
+
+  const bestProfession = Object.keys(professionsWithBalances).reduce((a, b) => professionsWithBalances[a] > professionsWithBalances[b] ? a : b)
+
+  res.json({ bestProfession })
+});
+
 module.exports = app;
