@@ -1,4 +1,4 @@
-const ContractService = require('../services/contract')
+const ContractService = require("../services/contract");
 
 const getContract = async (req, res) => {
   const {
@@ -6,7 +6,10 @@ const getContract = async (req, res) => {
     profile: { id: profileId },
   } = req;
 
-  const contract = await ContractService.getContract({ contractId: id, profileId })
+  const contract = await ContractService.getContract({
+    contractId: id,
+    profileId,
+  });
 
   if (!contract) return res.status(404).end();
 
@@ -18,7 +21,7 @@ const getContracts = async (req, res) => {
     profile: { id: profileId },
   } = req;
 
-  const contracts = await ContractService.getContracts({ profileId })
+  const contracts = await ContractService.getContracts({ profileId });
 
   if (!contracts) return res.status(404).end();
   res.json(contracts);
@@ -27,4 +30,4 @@ const getContracts = async (req, res) => {
 module.exports = {
   getContract,
   getContracts,
-}
+};

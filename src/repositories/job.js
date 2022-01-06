@@ -1,5 +1,5 @@
-const {Op} = require('sequelize')
-const { Job, Contract, Profile, sequelize } = require('../model')
+const { Op } = require("sequelize");
+const { Job, Contract, Profile, sequelize } = require("../model");
 
 const getUnpaidJobsByProfileId = ({ profileId }) => {
   return Job.findAll({
@@ -18,7 +18,7 @@ const getUnpaidJobsByProfileId = ({ profileId }) => {
       },
     ],
   });
-}
+};
 
 const getUnpaidJobsByClientId = ({ clientId }) => {
   return Job.findAll({
@@ -37,7 +37,7 @@ const getUnpaidJobsByClientId = ({ clientId }) => {
       },
     ],
   });
-}
+};
 
 const getUnpaidJobByJobIdAndClientId = ({ jobId, clientId }) => {
   return Job.findOne({
@@ -57,7 +57,7 @@ const getUnpaidJobByJobIdAndClientId = ({ jobId, clientId }) => {
       },
     ],
   });
-}
+};
 
 const payForJobTransactional = ({ job, profile }) => {
   return sequelize.transaction(async (transaction) => {
@@ -84,15 +84,15 @@ const payForJobTransactional = ({ job, profile }) => {
       }
     );
   });
-}
+};
 
 const groupJobsByProfessionAndProfit = ({ start, end, limit }) => {
   return Job.findAll({
     where: {
       paid: true,
       createdAt: {
-        [Op.between]: [start, end]
-      }
+        [Op.between]: [start, end],
+      },
     },
     include: [
       {
@@ -100,28 +100,28 @@ const groupJobsByProfessionAndProfit = ({ start, end, limit }) => {
         include: [
           {
             model: Profile,
-            as: 'Contractor'
-          }
-        ]
+            as: "Contractor",
+          },
+        ],
       },
     ],
-    group: '`Contract->Contractor`.`profession`',
+    group: "`Contract->Contractor`.`profession`",
     attributes: [
-      [sequelize.fn('SUM', sequelize.col('price')), 'paid'],
-      [sequelize.col('`Contract->Contractor`.`profession`'), 'profession'],
+      [sequelize.fn("SUM", sequelize.col("price")), "paid"],
+      [sequelize.col("`Contract->Contractor`.`profession`"), "profession"],
     ],
-    order: [sequelize.literal('paid DESC')],
-    limit
+    order: [sequelize.literal("paid DESC")],
+    limit,
   });
-}
+};
 
 const groupJobsByClientsAndProfit = ({ start, end, limit }) => {
   return Job.findAll({
     where: {
       paid: true,
       createdAt: {
-        [Op.between]: [start, end]
-      }
+        [Op.between]: [start, end],
+      },
     },
     include: [
       {
@@ -130,22 +130,27 @@ const groupJobsByClientsAndProfit = ({ start, end, limit }) => {
         include: [
           {
             model: Profile,
-            as: 'Client',
-            attributes: []
-          }
+            as: "Client",
+            attributes: [],
+          },
         ],
       },
     ],
-    group: '`Contract->Client`.`id`',
+    group: "`Contract->Client`.`id`",
     attributes: [
-      [sequelize.fn('SUM', sequelize.col('price')), 'paid'],
-      [sequelize.col('`Contract->Client`.`id`'), 'id'],
-      [sequelize.literal("`Contract->Client`.`firstName` || ' ' || `Contract->Client`.`lastName`"), 'fullName']
+      [sequelize.fn("SUM", sequelize.col("price")), "paid"],
+      [sequelize.col("`Contract->Client`.`id`"), "id"],
+      [
+        sequelize.literal(
+          "`Contract->Client`.`firstName` || ' ' || `Contract->Client`.`lastName`"
+        ),
+        "fullName",
+      ],
     ],
-    order: [sequelize.literal('paid DESC')],
-    limit
+    order: [sequelize.literal("paid DESC")],
+    limit,
   });
-}
+};
 
 module.exports = {
   getUnpaidJobsByProfileId,
@@ -154,4 +159,4 @@ module.exports = {
   payForJobTransactional,
   groupJobsByProfessionAndProfit,
   groupJobsByClientsAndProfit,
-}
+};

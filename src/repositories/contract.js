@@ -1,5 +1,5 @@
-const {Op} = require('sequelize')
-const { Contract } = require('../model')
+const { Op } = require("sequelize");
+const { Contract } = require("../model");
 
 const getContractById = async ({ contractId, profileId }) => {
   const contract = await Contract.findOne({
@@ -9,8 +9,8 @@ const getContractById = async ({ contractId, profileId }) => {
     },
   });
 
-  return contract
-}
+  return contract;
+};
 
 const getContractsByProfileId = async ({ profileId }) => {
   const contracts = await Contract.findAll({
@@ -20,7 +20,7 @@ const getContractsByProfileId = async ({ profileId }) => {
     },
   });
 
-  return contracts
-}
+  return contracts;
+};
 
-module.exports = { getContractById, getContractsByProfileId }
+module.exports = { getContractById, getContractsByProfileId };
