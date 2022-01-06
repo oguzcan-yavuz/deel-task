@@ -1,7 +1,7 @@
 const JobRepository = require("../repositories/job");
 const ProfileRepository = require("../repositories/profile");
 
-const calculateTotalAmountToPay = ({ jobs }) =>
+const calculateTotalJobPrice = ({ jobs }) =>
   jobs.reduce((amount, job) => amount + job.price, 0);
 
 const isDepositAmountValid = ({ depositAmount, amountToPay }) => {
@@ -15,7 +15,7 @@ const depositBalanceForClient = async ({ userId, depositAmount }) => {
     clientId: userId,
   });
 
-  const totalAmountToPay = calculateTotalAmountToPay({ jobs });
+  const totalAmountToPay = calculateTotalJobPrice({ jobs });
 
   if (!isDepositAmountValid({ depositAmount, amountToPay: totalAmountToPay })) {
     const error = new Error();
@@ -30,5 +30,7 @@ const depositBalanceForClient = async ({ userId, depositAmount }) => {
 };
 
 module.exports = {
+  calculateTotalJobPrice,
+  isDepositAmountValid,
   depositBalanceForClient,
 };
